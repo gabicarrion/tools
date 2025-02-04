@@ -3,8 +3,6 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime
-import os
-import shutil
 
 # Set page config
 st.set_page_config(
@@ -14,43 +12,50 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-
-# Define the base directory (where your script is located)
-BASE_DIR = '.'  # or os.path.dirname(__file__)
-HISTORY_DIR = os.path.join(BASE_DIR, 'history')
-css_path = os.path.join(BASE_DIR, 'style.css')
-
-# Initialize session state
-if 'historical_data' not in st.session_state:
-    st.session_state.historical_data = None
+# Initialize session state for data
+if 'data_loaded' not in st.session_state:
+    st.session_state.data_loaded = False
 if 'current_data' not in st.session_state:
     st.session_state.current_data = None
+if 'historical_data' not in st.session_state:
+    st.session_state.historical_data = None
 
-
-# Load custom CSS
-with open(css_path) as f:
-    st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-
+def process_data(df):
+    """Process the uploaded data and prepare it for display"""
+    try:
+        # Clean date
+        df['Date'] = df['Date'].apply(lambda x: x.split('GMT')[0].strip())
+        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+        
+        # Calculate green status
+        df['all_green'] = (df['INP'] >= 75) & (df['CLS'] >= 75) & (df['LCP'] >= 75)
+        
+        # Split into current and historical
+        latest_date = df['Date'].max()
+        current_data = df[df['Date'] == latest_date].copy()
+        
+        return df, current_data
+    except Exception as e:
+        st.error(f"Error processing data: {str(e)}")
+        return None, None
 
 # File uploader in sidebar
 st.sidebar.markdown("### Data Upload")
-uploaded_file = st.sidebar.file_uploader("Upload CWV Report", type=['txt', 'csv'])
+uploaded_file = st.sidebar.file_uploader("Upload CWV Report", type=['txt'])
 
 if uploaded_file is not None:
     try:
-        # Read and process the data
+        # Read the uploaded file
         data = pd.read_csv(uploaded_file, sep='\t')
-        processed_data = process_data(data)
         
-        if not processed_data.empty:
-            # Store in session state
-            st.session_state.current_data = processed_data[
-                processed_data['Date'] == processed_data['Date'].max()
-            ]
-            st.session_state.historical_data = processed_data
+        # Process the data
+        historical_data, current_data = process_data(data)
+        
+        if historical_data is not None and current_data is not None:
+            st.session_state.historical_data = historical_data
+            st.session_state.current_data = current_data
+            st.session_state.data_loaded = True
             
-            # Clear the file uploader
-            uploaded_file = None
     except Exception as e:
         st.error(f"Error reading file: {str(e)}")
         
