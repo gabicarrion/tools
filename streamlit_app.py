@@ -297,6 +297,13 @@ with tab2:
     if historical_df is not None:
         st.markdown('<div class="chart-container">', unsafe_allow_html=True)
         st.markdown('<p class="subheader">Performance Trends</p>', unsafe_allow_html=True)
+
+        # Add all_green calculation to historical data
+        historical_df['all_green'] = (
+            (historical_df['INP'] >= 75) & 
+            (historical_df['CLS'] >= 75) & 
+            (historical_df['LCP'] >= 75)
+        )
         
         # Calculate metrics
         daily_metrics = historical_df.groupby('Date').agg({
