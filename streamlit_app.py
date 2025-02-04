@@ -20,12 +20,40 @@ BASE_DIR = '.'  # or os.path.dirname(__file__)
 HISTORY_DIR = os.path.join(BASE_DIR, 'history')
 css_path = os.path.join(BASE_DIR, 'style.css')
 
+# Initialize session state
+if 'historical_data' not in st.session_state:
+    st.session_state.historical_data = None
+if 'current_data' not in st.session_state:
+    st.session_state.current_data = None
 
 
 # Load custom CSS
 with open(css_path) as f:
     st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 
+
+# File uploader in sidebar
+st.sidebar.markdown("### Data Upload")
+uploaded_file = st.sidebar.file_uploader("Upload CWV Report", type=['txt', 'csv'])
+
+if uploaded_file is not None:
+    try:
+        # Read and process the data
+        data = pd.read_csv(uploaded_file, sep='\t')
+        processed_data = process_data(data)
+        
+        if not processed_data.empty:
+            # Store in session state
+            st.session_state.current_data = processed_data[
+                processed_data['Date'] == processed_data['Date'].max()
+            ]
+            st.session_state.historical_data = processed_data
+            
+            # Clear the file uploader
+            uploaded_file = None
+    except Exception as e:
+        st.error(f"Error reading file: {str(e)}")
+        
 def process_consolidated_file():
     consolidated_df = pd.read_csv(os.path.join(BASE_DIR, 'cwv_report.txt'), sep='\t')
     consolidated_df['Date'] = consolidated_df['Date'].apply(lambda x: x.split('GMT')[0].strip())
