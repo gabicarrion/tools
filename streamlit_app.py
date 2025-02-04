@@ -16,9 +16,9 @@ st.set_page_config(
 
 
 # Define the base directory (where your script is located)
-BASE_DIR = '/workspaces/tools'
-HISTORY_DIR = '/workspaces/tools/history'
-css_path = '/workspaces/tools/style.css'
+BASE_DIR = '.'  # or os.path.dirname(__file__)
+HISTORY_DIR = os.path.join(BASE_DIR, 'history')
+css_path = os.path.join(BASE_DIR, 'style.css')
 
 
 
