@@ -9,8 +9,11 @@ import shutil
 
 # Define the base directory (where your script is located)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+print(BASE_DIR)
 HISTORY_DIR = os.path.join(BASE_DIR, 'history')
+print(HISTORY_DIR)
 css_path = os.path.join(BASE_DIR, 'style.css')
+print(css_path)
 
 # Set page config
 st.set_page_config(
